@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect 
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 from .models import Room, Topic
 from .forms import RoomForm
 from django.db.models import Q
@@ -19,15 +20,23 @@ def loginPage(request):
 
         try:
             user = User.objects.get(username=username)
-            if user.check_password(password):
-                request.session['user_id'] = user.id
-                return redirect('home')
-            else:
-                return redirect('login')
         except:
             messages.error(request, 'User does not exist')
+        user = authenticate(request, username=username, password=password)    
+        if user is not None:
+            login(request, user)
+            # request.session['user_id'] = user.id
+            return redirect('home')
+        else: 
+            messages.error(request, 'Invalid credentials')
+            
     context = {}
     return render(request, 'base/login_register.html', context)
+
+def logoutUser(request):
+    logout(request)
+    return redirect('home')
+
 def home(request):
     q = request.GET.get('q') if request.GET.get('q') != None else ''
 
